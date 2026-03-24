@@ -1,94 +1,94 @@
-# YouTube 视频语音转文字工具
+# YouTube Speech-to-Text Transcriber
 
-输入 YouTube 视频链接，自动下载音频并使用本地 Whisper 模型转录为文字，结果在网页中展示。**全程本地运行，无需 API Key，无需联网调用 AI 服务。**
-
----
-
-## 功能特性
-
-- 粘贴 YouTube 链接，一键开始处理
-- 实时显示进度（下载 → 转录 → 生成文档）
-- 转录结果带时间戳（`[00:12 → 00:18]` 格式）
-- 支持多种 Whisper 模型（tiny / base / small / medium / large）
-- 支持自动语言检测或手动指定语言
-- 历史记录自动保存，可随时查看
-- 网页内嵌 YouTube 播放器，对照字幕回放
+Paste a YouTube link, and this tool automatically downloads the audio and transcribes it using a local Whisper model — results are displayed in a clean web interface. **Runs entirely offline. No API key required. No cloud AI calls.**
 
 ---
 
-## 目录结构
+## Features
+
+- One-click processing from a YouTube URL
+- Real-time progress display (Download → Transcribe → Save)
+- Timestamped transcript output (`[00:12 → 00:18]` format)
+- Supports all Whisper model sizes (tiny / base / small / medium / large)
+- Auto language detection or manual language selection
+- History saved automatically — revisit any past result
+- Embedded YouTube player for side-by-side playback and transcript review
+
+---
+
+## Project Structure
 
 ```
 youtube-transcriber/
-├── yt-dlp.exe                  # YouTube 下载工具（需手动下载，见下文）
+├── yt-dlp.exe                  # YouTube downloader (download manually, see Step 2)
 ├── webapp/
-│   ├── app.py                  # Flask 后端主程序
-│   ├── 启动服务.bat             # 一键启动脚本
+│   ├── app.py                  # Flask backend
+│   ├── 启动服务.bat             # Windows launcher script
 │   ├── templates/
-│   │   └── index.html          # 前端页面
-│   └── results/                # 转录结果存放目录（自动创建）
-├── whisper_transcribe.py       # 命令行版转录脚本
-├── download_and_transcribe.bat # 命令行版一键脚本
-├── ocr_batch.py                # 批量图片 OCR 脚本
-├── pdf_extract.py              # PDF 文字提取脚本
+│   │   └── index.html          # Frontend page
+│   └── results/                # Transcript output directory (auto-created)
+├── whisper_transcribe.py       # Standalone CLI transcription script
+├── download_and_transcribe.bat # CLI all-in-one batch script
+├── ocr_batch.py                # Batch image OCR script
+├── pdf_extract.py              # PDF text extraction script
 └── .gitignore
 ```
 
 ---
 
-## 安装步骤
+## Installation
 
-### 第一步：安装 Python
+### Step 1 — Install Python
 
-1. 打开 https://www.python.org/downloads/
-2. 下载 **Python 3.10 或 3.11**（推荐 3.11）
-3. 运行安装程序，**务必勾选 "Add Python to PATH"**，然后点击 Install Now
-4. 安装完成后，打开命令提示符（Win + R → 输入 `cmd` → 回车），验证：
+1. Go to https://www.python.org/downloads/
+2. Download **Python 3.10 or 3.11** (3.11 recommended)
+3. Run the installer — **check "Add Python to PATH"** before clicking Install Now
+4. After installation, open Command Prompt (Win + R → type `cmd` → Enter) and verify:
    ```
    python --version
    ```
-   显示版本号即为成功。
+   You should see a version number like `Python 3.11.x`.
 
 ---
 
-### 第二步：下载 yt-dlp.exe
+### Step 2 — Download yt-dlp.exe
 
-1. 打开 https://github.com/yt-dlp/yt-dlp/releases/latest
-2. 下载 `yt-dlp.exe`
-3. 将 `yt-dlp.exe` 放到项目根目录（与 `webapp/` 同级）
+1. Go to https://github.com/yt-dlp/yt-dlp/releases/latest
+2. Download `yt-dlp.exe`
+3. Place `yt-dlp.exe` in the project root directory (same level as the `webapp/` folder)
 
 ---
 
-### 第三步：安装 ffmpeg
+### Step 3 — Install ffmpeg
 
-Whisper 转录音频时依赖 ffmpeg，必须安装。
+Whisper requires ffmpeg to process audio files.
 
-**方法一：通过 winget 安装（推荐，Win10/11 自带 winget）**
+**Option A: Install via winget (recommended — built into Windows 10/11)**
 
-打开命令提示符，运行：
+Open Command Prompt and run:
 ```
 winget install --id Gyan.FFmpeg -e --source winget
 ```
-安装完成后**关闭并重新打开**命令提示符，验证：
+After installation, **close and reopen** Command Prompt, then verify:
 ```
 ffmpeg -version
 ```
 
-**方法二：手动安装**
+**Option B: Manual installation**
 
-1. 打开 https://www.gyan.dev/ffmpeg/builds/
-2. 下载 `ffmpeg-release-essentials.zip`
-3. 解压到 `C:\ffmpeg\`
-4. 将 `C:\ffmpeg\bin` 添加到系统环境变量 PATH：
-   - 右键"此电脑" → 属性 → 高级系统设置 → 环境变量
-   - 在"系统变量"中找到 `Path`，双击 → 新建 → 输入 `C:\ffmpeg\bin`
-   - 点击确定，重新打开命令提示符验证
+1. Go to https://www.gyan.dev/ffmpeg/builds/
+2. Download `ffmpeg-release-essentials.zip`
+3. Extract it to `C:\ffmpeg\`
+4. Add `C:\ffmpeg\bin` to your system PATH:
+   - Right-click "This PC" → Properties → Advanced system settings → Environment Variables
+   - Under "System variables", find `Path` → double-click → New → enter `C:\ffmpeg\bin`
+   - Click OK, then reopen Command Prompt and verify with `ffmpeg -version`
 
 ---
 
-### 第四步：安装 Python 依赖库
+### Step 4 — Install Python Dependencies
 
-打开命令提示符，逐条运行以下命令：
+Open Command Prompt and run the following commands one by one:
 
 ```
 pip install flask
@@ -96,54 +96,54 @@ pip install openai-whisper
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 ```
 
-> **说明：**
-> - `flask`：Web 服务框架
-> - `openai-whisper`：语音转文字模型（本地推理，不联网）
-> - `torch`：Whisper 的运行依赖，上面命令安装 CPU 版本（约 200MB）
+> **Notes:**
+> - `flask` — lightweight web framework for the UI
+> - `openai-whisper` — local speech recognition model (runs fully offline)
+> - `torch` — required by Whisper; the command above installs the CPU-only version (~200 MB)
 >
-> **如果你有 NVIDIA 显卡**，可以安装 GPU 版 torch，速度会快 5-10 倍：
+> **If you have an NVIDIA GPU**, install the GPU version of torch for 5–10× faster transcription:
 > ```
 > pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 > ```
-> （cu121 对应 CUDA 12.1，根据你的显卡驱动版本选择）
+> *(cu121 = CUDA 12.1 — choose the version matching your GPU driver)*
 
 ---
 
-### 第五步：下载 Whisper 模型（首次运行自动下载）
+### Step 5 — Whisper Model (Auto-downloaded on First Run)
 
-首次运行时，Whisper 会自动从 OpenAI 官方下载模型文件到本机缓存目录  
-（`C:\Users\你的用户名\.cache\whisper\`），**之后无需重复下载**。
+On first use, Whisper automatically downloads the model file to your local cache  
+(`C:\Users\YourName\.cache\whisper\`). **This only happens once.**
 
-各模型大小与速度对比：
+Model size and speed comparison:
 
-| 模型 | 文件大小 | 转录速度 | 推荐场景 |
-|------|---------|---------|---------|
-| tiny | 75 MB | 最快 | 快速测试 |
-| base | 142 MB | 快 | 英文内容 |
-| small | 466 MB | 中 | 一般使用 |
-| **medium** | **1.4 GB** | **慢** | **中文推荐** |
-| large | 2.9 GB | 最慢 | 最高精度 |
+| Model | Size | Speed | Best For |
+|-------|------|-------|----------|
+| tiny | 75 MB | Fastest | Quick tests |
+| base | 142 MB | Fast | English content |
+| small | 466 MB | Medium | General use |
+| **medium** | **1.4 GB** | **Slow** | **Chinese recommended** |
+| large | 2.9 GB | Slowest | Highest accuracy |
 
-> 中文视频建议使用 **medium** 或 **large** 模型，tiny/base 对中文识别效果较差。
+> For Chinese or other non-English videos, **medium** or **large** is strongly recommended. tiny/base have noticeably lower accuracy on non-English audio.
 
 ---
 
-## 启动网页应用
+## Starting the Web App
 
-安装完成后，有两种方式启动：
+Once everything is installed, you have two options:
 
-**方式一：双击批处理文件**
+**Option A: Double-click the batch file**
 
-双击项目目录中的 `webapp\启动服务.bat`
+Double-click `webapp\启动服务.bat` in the project folder.
 
-**方式二：命令行启动**
+**Option B: Command line**
 
 ```
 cd webapp
 python app.py
 ```
 
-启动成功后，打开浏览器访问：
+Then open your browser and visit:
 
 ```
 http://127.0.0.1:5000
@@ -151,33 +151,33 @@ http://127.0.0.1:5000
 
 ---
 
-## 使用方法
+## How to Use
 
-1. 在网页输入框中粘贴 YouTube 视频链接
-2. 选择 Whisper 模型（中文视频推荐 medium）
-3. 选择语言（中文选 `zh`，不确定选 `auto`）
-4. 点击"开始处理"
-5. 等待进度条完成（时长约为视频时长的 1-3 倍，取决于电脑性能）
-6. 查看带时间戳的转录结果
+1. Paste a YouTube video URL into the input box
+2. Select a Whisper model (medium recommended for Chinese)
+3. Select the language (`zh` for Chinese, `auto` to detect automatically)
+4. Click **Start**
+5. Wait for all three steps to complete (roughly 1–3× the video duration, depending on your hardware)
+6. View the timestamped transcript and download the result
 
 ---
 
-## 常见问题
+## Troubleshooting
 
-**Q: 提示 `ffmpeg not found`**  
-A: ffmpeg 未正确加入 PATH，参考第三步，安装后重新打开命令提示符再试。
+**Q: `ffmpeg not found` error**  
+A: ffmpeg was not added to PATH correctly. Revisit Step 3, then close and reopen Command Prompt.
 
-**Q: 首次运行很慢，卡在"加载模型"**  
-A: 正在自动下载模型文件，medium 模型约 1.4GB，请耐心等待，下载完成后下次启动会很快。
+**Q: First run is very slow / stuck on "Loading model"**  
+A: Whisper is downloading the model file in the background (medium = ~1.4 GB). Wait for it to finish — subsequent runs will start immediately.
 
-**Q: 转录速度很慢**  
-A: CPU 模式下 medium 模型处理 1 小时视频约需 2-4 小时。有 NVIDIA 显卡的用户安装 GPU 版 torch 可大幅提速。
+**Q: Transcription is very slow**  
+A: On CPU, the medium model takes roughly 2–4 hours for a 1-hour video. Installing the GPU version of torch (see Step 4) significantly reduces this.
 
-**Q: 中文识别错误较多**  
-A: 尝试换用更大的模型（medium → large），或在启动时指定语言为 `zh`。
+**Q: Poor accuracy on Chinese audio**  
+A: Try a larger model (medium → large) or explicitly set the language to `zh`.
 
-**Q: `pip install` 提示网络错误**  
-A: 使用国内镜像加速：
+**Q: `pip install` fails or times out**  
+A: Try using a mirror:
 ```
 pip install flask -i https://pypi.tuna.tsinghua.edu.cn/simple
 pip install openai-whisper -i https://pypi.tuna.tsinghua.edu.cn/simple
@@ -185,14 +185,14 @@ pip install openai-whisper -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 ---
 
-## 版本历史
+## Changelog
 
-| 版本 | 日期 | 说明 |
-|------|------|------|
-| v1.0 | 2026-03-24 | 初始发布，支持 Web 界面、实时进度、历史记录 |
+| Version | Date | Notes |
+|---------|------|-------|
+| v1.0 | 2026-03-24 | Initial release — web UI, real-time progress, history |
 
 ---
 
-## 许可证
+## License
 
-MIT License — 自由使用、修改、分发。
+MIT License — free to use, modify, and distribute.
