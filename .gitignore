@@ -1,0 +1,32 @@
+# 媒体文件（保护版权内容）
+视频/
+邵子神数条文/
+
+# 转录结果（用户数据）
+webapp/results/
+
+# 二进制工具
+yt-dlp.exe
+7z_installer.exe
+7zr.exe
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# 虚拟环境
+venv/
+.venv/
+env/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 临时文件
+*.tmp
+*.log

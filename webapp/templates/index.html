@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>视频语音转文字工具</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', 'PingFang SC', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+
+    header {
+      background: linear-gradient(135deg, #1a1f2e 0%, #16213e 100%);
+      border-bottom: 1px solid #2d3748;
+      padding: 20px 40px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    header .logo { font-size: 28px; }
+    header h1 { font-size: 20px; font-weight: 600; color: #fff; }
+    header p  { font-size: 13px; color: #718096; margin-top: 2px; }
+
+    .container { max-width: 960px; margin: 40px auto; padding: 0 20px; }
+
+    /* 输入卡片 */
+    .input-card {
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 28px;
+    }
+    .input-card h2 { font-size: 16px; color: #a0aec0; margin-bottom: 16px; font-weight: 500; }
+    .url-row { display: flex; gap: 12px; }
+    .url-row input {
+      flex: 1;
+      background: #0f1117;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: #e2e8f0;
+      font-size: 15px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .url-row input:focus { border-color: #4299e1; }
+    .url-row input::placeholder { color: #4a5568; }
+    .btn-primary {
+      background: linear-gradient(135deg, #4299e1, #3182ce);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 28px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+      white-space: nowrap;
+    }
+    .btn-primary:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    .options { display: flex; gap: 24px; margin-top: 16px; flex-wrap: wrap; }
+    .options label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #718096; cursor: pointer; }
+    .options select {
+      background: #0f1117; border: 1px solid #2d3748; border-radius: 6px;
+      color: #e2e8f0; padding: 4px 8px; font-size: 13px; outline: none;
+    }
+
+    /* 进度 */
+    #progress-area { display: none; margin-bottom: 28px; }
+    .progress-card {
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-radius: 16px;
+      padding: 24px 32px;
+    }
+    .progress-card h3 { font-size: 15px; color: #a0aec0; margin-bottom: 16px; }
+    .steps { display: flex; flex-direction: column; gap: 10px; }
+    .step {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; border-radius: 8px;
+      background: #0f1117; border: 1px solid #2d3748;
+      font-size: 14px; transition: all .3s;
+    }
+    .step .icon { font-size: 18px; width: 24px; text-align: center; }
+    .step .label { flex: 1; color: #718096; }
+    .step .status { font-size: 12px; color: #4a5568; }
+    .step.active { border-color: #4299e1; background: #1a2744; }
+    .step.active .label { color: #90cdf4; }
+    .step.active .status { color: #4299e1; }
+    .step.done { border-color: #38a169; background: #1a2e1a; }
+    .step.done .label { color: #9ae6b4; }
+    .step.done .status { color: #38a169; }
+    .step.error { border-color: #e53e3e; background: #2d1a1a; }
+
+    .log-box {
+      margin-top: 16px;
+      background: #0a0d14;
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      color: #68d391;
+      height: 120px;
+      overflow-y: auto;
+      line-height: 1.7;
+    }
+
+    /* 结果区 */
+    #result-area { display: none; }
+    .result-card {
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .result-header {
+      padding: 18px 28px;
+      border-bottom: 1px solid #2d3748;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .result-header h2 { font-size: 16px; font-weight: 600; flex: 1; }
+    .result-header .meta { font-size: 12px; color: #718096; }
+    .btn-copy {
+      background: #2d3748; color: #a0aec0; border: none; border-radius: 6px;
+      padding: 6px 14px; font-size: 12px; cursor: pointer; transition: all .2s;
+    }
+    .btn-copy:hover { background: #4a5568; color: #fff; }
+
+    /* 标签页 */
+    .tabs { display: flex; border-bottom: 1px solid #2d3748; padding: 0 28px; background: #161b28; }
+    .tab {
+      padding: 12px 20px; font-size: 13px; color: #718096; cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .2s;
+    }
+    .tab.active { color: #4299e1; border-bottom-color: #4299e1; }
+    .tab:hover { color: #a0aec0; }
+
+    .tab-content { display: none; padding: 24px 28px; }
+    .tab-content.active { display: block; }
+
+    /* 转录文字 */
+    .transcript-list { display: flex; flex-direction: column; gap: 4px; }
+    .seg {
+      display: flex; gap: 16px; padding: 8px 12px; border-radius: 6px;
+      transition: background .15s; cursor: default;
+    }
+    .seg:hover { background: #0f1117; }
+    .seg .ts { font-size: 11px; color: #4a5568; font-family: monospace; white-space: nowrap; padding-top: 2px; min-width: 90px; }
+    .seg .txt { font-size: 15px; color: #e2e8f0; line-height: 1.65; }
+
+    /* 历史记录 */
+    #history-area { margin-top: 16px; }
+    .history-list { display: flex; flex-direction: column; gap: 10px; }
+    .history-item {
+      background: #1a1f2e; border: 1px solid #2d3748; border-radius: 10px;
+      padding: 14px 20px; display: flex; align-items: center; gap: 14px; cursor: pointer;
+      transition: border-color .2s;
+    }
+    .history-item:hover { border-color: #4299e1; }
+    .history-item .thumb { font-size: 28px; }
+    .history-item .info { flex: 1; }
+    .history-item .info .title { font-size: 14px; font-weight: 500; }
+    .history-item .info .date  { font-size: 12px; color: #718096; margin-top: 3px; }
+    .history-item .badge { font-size: 11px; background: #38a169; color: #fff; padding: 3px 8px; border-radius: 20px; }
+
+    .empty-tip { color: #4a5568; text-align: center; padding: 40px 0; font-size: 14px; }
+    .section-title { font-size: 13px; color: #718096; margin-bottom: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🎬</div>
+  <div>
+    <h1>视频语音转文字工具</h1>
+    <p>自动下载 YouTube 视频 · 提取音频 · Whisper 转录 · 生成文档</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- 输入区 -->
+  <div class="input-card">
+    <h2>输入视频链接</h2>
+    <div class="url-row">
+      <input type="text" id="url-input" placeholder="粘贴 YouTube 链接，如 https://www.youtube.com/watch?v=xxxxx" />
+      <button class="btn-primary" id="submit-btn" onclick="startProcess()">开始处理</button>
+    </div>
+    <div class="options">
+      <label>Whisper 模型
+        <select id="model-select">
+          <option value="base">base（快，准确度低）</option>
+          <option value="small">small（均衡）</option>
+          <option value="medium" selected>medium（推荐）</option>
+          <option value="large-v3">large-v3（最准，慢）</option>
+        </select>
+      </label>
+      <label>语言
+        <select id="lang-select">
+          <option value="zh" selected>中文</option>
+          <option value="en">English</option>
+          <option value="auto">自动检测</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <!-- 进度 -->
+  <div id="progress-area">
+    <div class="progress-card">
+      <h3>⚙️ 处理进度</h3>
+      <div class="steps">
+        <div class="step" id="step-download">
+          <span class="icon">⬇️</span>
+          <span class="label">下载视频信息 & 音频</span>
+          <span class="status" id="step-download-status">等待中</span>
+        </div>
+        <div class="step" id="step-whisper">
+          <span class="icon">🎙️</span>
+          <span class="label">Whisper 语音识别</span>
+          <span class="status" id="step-whisper-status">等待中</span>
+        </div>
+        <div class="step" id="step-doc">
+          <span class="icon">📄</span>
+          <span class="label">生成结构化文档</span>
+          <span class="status" id="step-doc-status">等待中</span>
+        </div>
+      </div>
+      <div class="log-box" id="log-box"></div>
+    </div>
+  </div>
+
+  <!-- 结果 -->
+  <div id="result-area">
+    <div class="result-card">
+      <div class="result-header">
+        <span style="font-size:22px">✅</span>
+        <h2 id="result-title">处理完成</h2>
+        <span class="meta" id="result-meta"></span>
+        <button class="btn-copy" onclick="copyAll()">复制全文</button>
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('transcript')">📝 带时间戳</div>
+        <div class="tab" onclick="switchTab('plain')">📋 纯文字</div>
+        <div class="tab" onclick="switchTab('video')">🎬 视频预览</div>
+      </div>
+      <div class="tab-content active" id="tab-transcript">
+        <div class="transcript-list" id="transcript-list"></div>
+      </div>
+      <div class="tab-content" id="tab-plain">
+        <div style="font-size:15px;line-height:2;color:#e2e8f0;white-space:pre-wrap" id="plain-text"></div>
+      </div>
+      <div class="tab-content" id="tab-video">
+        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:8px">
+          <iframe id="yt-embed" style="position:absolute;top:0;left:0;width:100%;height:100%"
+            frameborder="0" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 历史记录 -->
+  <div id="history-area">
+    <div class="section-title">历史记录</div>
+    <div class="history-list" id="history-list">
+      <div class="empty-tip">暂无记录，处理第一个视频后会显示在这里</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let currentJobId = null;
+let pollTimer   = null;
+
+function log(msg) {
+  const box = document.getElementById('log-box');
+  box.innerHTML += msg + '\n';
+  box.scrollTop = box.scrollHeight;
+}
+
+function setStep(stepId, state, statusText) {
+  const el  = document.getElementById('step-' + stepId);
+  const sta = document.getElementById('step-' + stepId + '-status');
+  el.className  = 'step ' + state;
+  sta.textContent = statusText;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['transcript','plain','video'][i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function extractVideoId(url) {
+  const m = url.match(/[?&]v=([^&]+)/) || url.match(/youtu\.be\/([^?]+)/);
+  return m ? m[1] : null;
+}
+
+async function startProcess() {
+  const url   = document.getElementById('url-input').value.trim();
+  const model = document.getElementById('model-select').value;
+  const lang  = document.getElementById('lang-select').value;
+  if (!url) { alert('请输入视频链接'); return; }
+
+  // 重置 UI
+  document.getElementById('submit-btn').disabled = true;
+  document.getElementById('progress-area').style.display = 'block';
+  document.getElementById('result-area').style.display   = 'none';
+  document.getElementById('log-box').innerHTML = '';
+  ['download','whisper','doc'].forEach(s => setStep(s, '', '等待中'));
+
+  log('📡 提交任务...');
+  try {
+    const res  = await fetch('/api/start', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ url, model, lang })
+    });
+    const data = await res.json();
+    if (!data.job_id) throw new Error(data.error || '提交失败');
+    currentJobId = data.job_id;
+    log('✅ 任务ID: ' + currentJobId);
+    pollTimer = setInterval(pollStatus, 2000);
+  } catch(e) {
+    log('❌ 错误: ' + e.message);
+    document.getElementById('submit-btn').disabled = false;
+  }
+}
+
+async function pollStatus() {
+  if (!currentJobId) return;
+  try {
+    const res  = await fetch('/api/status/' + currentJobId);
+    const data = await res.json();
+
+    // 更新步骤状态
+    const stepMap = { download: data.step_download, whisper: data.step_whisper, doc: data.step_doc };
+    for (const [k, v] of Object.entries(stepMap)) {
+      if (v === 'done')    setStep(k, 'done',   '完成 ✓');
+      else if (v === 'running') setStep(k, 'active', '处理中...');
+      else if (v === 'error')   setStep(k, 'error',  '失败 ✗');
+    }
+
+    if (data.log_new) data.log_new.forEach(l => log(l));
+
+    if (data.status === 'done') {
+      clearInterval(pollTimer);
+      showResult(data.result);
+      saveHistory(data.result);
+      document.getElementById('submit-btn').disabled = false;
+    } else if (data.status === 'error') {
+      clearInterval(pollTimer);
+      log('❌ 任务失败: ' + data.error);
+      document.getElementById('submit-btn').disabled = false;
+    }
+  } catch(e) { /* ignore */ }
+}
+
+function showResult(r) {
+  document.getElementById('result-area').style.display = 'block';
+  document.getElementById('result-title').textContent  = r.title || '转录完成';
+  document.getElementById('result-meta').textContent   =
+    `共 ${r.segments?.length || 0} 段 · ${r.duration || ''} · ${r.model}`;
+
+  // 带时间戳
+  const list = document.getElementById('transcript-list');
+  list.innerHTML = '';
+  (r.segments || []).forEach(seg => {
+    const div = document.createElement('div');
+    div.className = 'seg';
+    div.innerHTML = `<span class="ts">${seg.start} → ${seg.end}</span><span class="txt">${seg.text}</span>`;
+    list.appendChild(div);
+  });
+
+  // 纯文字
+  document.getElementById('plain-text').textContent = r.full_text || '';
+
+  // 视频嵌入
+  const vid = extractVideoId(r.url || '');
+  if (vid) {
+    document.getElementById('yt-embed').src =
+      `https://www.youtube.com/embed/${vid}?rel=0`;
+  }
+}
+
+function copyAll() {
+  const text = document.getElementById('plain-text').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.btn-copy');
+    btn.textContent = '已复制 ✓';
+    setTimeout(() => btn.textContent = '复制全文', 2000);
+  });
+}
+
+// 历史记录（localStorage）
+function saveHistory(r) {
+  const key  = 'yt_history';
+  const list = JSON.parse(localStorage.getItem(key) || '[]');
+  list.unshift({ title: r.title, url: r.url, date: new Date().toLocaleString(), job_id: r.job_id });
+  localStorage.setItem(key, JSON.stringify(list.slice(0, 20)));
+  renderHistory();
+}
+
+function renderHistory() {
+  const key  = 'yt_history';
+  const list = JSON.parse(localStorage.getItem(key) || '[]');
+  const el   = document.getElementById('history-list');
+  if (!list.length) { el.innerHTML = '<div class="empty-tip">暂无记录，处理第一个视频后会显示在这里</div>'; return; }
+  el.innerHTML = list.map(item => `
+    <div class="history-item" onclick="loadHistory('${item.job_id}')">
+      <span class="thumb">🎬</span>
+      <div class="info">
+        <div class="title">${item.title || item.url}</div>
+        <div class="date">${item.date}</div>
+      </div>
+      <span class="badge">已完成</span>
+    </div>`).join('');
+}
+
+async function loadHistory(jobId) {
+  const res  = await fetch('/api/result/' + jobId);
+  const data = await res.json();
+  if (data.result) {
+    document.getElementById('progress-area').style.display = 'none';
+    showResult(data.result);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+renderHistory();
+</script>
+</body>
+</html>
