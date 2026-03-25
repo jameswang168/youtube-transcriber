@@ -3,6 +3,16 @@
 Paste a YouTube link, download the audio, and transcribe it locally with Whisper.
 This project runs offline after the dependencies and model are installed. No API key is required.
 
+## Quick Start
+
+1. Install Python 3.10 or 3.11.
+2. Create and activate a virtual environment.
+3. Run `pip install -r requirements.txt`.
+4. Install `ffmpeg`.
+5. Download `yt-dlp.exe` and place it in the project root.
+6. Start the app with `cd webapp` and `python app.py`.
+7. Open `http://127.0.0.1:5000` in your browser.
+
 ## Features
 
 - Paste a YouTube URL and start transcription
@@ -119,6 +129,13 @@ python whisper_transcribe.py "C:\path\to\audio.wav" --model medium --lang zh
 
 Double-click `download_and_transcribe.bat`, paste a YouTube URL, and follow the prompts.
 
+## Why this is a good portfolio project
+
+- It solves a real workflow problem end to end.
+- It shows practical Python, Flask, and local automation skills.
+- It demonstrates product thinking through a usable UI, history tracking, and structured output.
+- It is easy to explain in interviews because the goal is clear and the result is visible.
+
 ## Output
 
 Transcripts are saved under `webapp/results/` as:
@@ -131,6 +148,7 @@ Transcripts are saved under `webapp/results/` as:
 - For Chinese audio, `medium` or `large-v3` usually gives better accuracy.
 - The first run may take a while because Whisper downloads the model to the local cache.
 - If you have an NVIDIA GPU, you can swap the CPU-only PyTorch install for a CUDA build.
+- If you want a faster first demo, start with `base` or `small`.
 
 ## License
 
