@@ -33,10 +33,7 @@ youtube-transcriber/
 - Python 3.10 or 3.11
 - `ffmpeg`
 - `yt-dlp.exe` in the project root
-- Python packages:
-  - `flask`
-  - `openai-whisper`
-  - `torch`
+- Python packages listed in `requirements.txt`
 
 ## Installation
 
@@ -48,21 +45,52 @@ Make sure Python is installed and available on PATH:
 python --version
 ```
 
-### 2. Download yt-dlp.exe
+### 2. Create a virtual environment
 
-Download the latest `yt-dlp.exe` from the official releases page and place it in the project root.
-
-### 3. Install ffmpeg
-
-Install `ffmpeg` with `winget` or manually add it to PATH.
-
-### 4. Install dependencies
+From the project root:
 
 ```bash
-pip install flask
-pip install openai-whisper
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+python -m venv .venv
+.venv\Scripts\activate
 ```
+
+If you prefer PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+### 3. Install dependencies
+
+Install everything in one step:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Install ffmpeg
+
+Install `ffmpeg` with `winget` or manually add it to PATH:
+
+```bash
+winget install --id Gyan.FFmpeg -e --source winget
+```
+
+Verify it works:
+
+```bash
+ffmpeg -version
+```
+
+### 5. Download yt-dlp.exe
+
+Download the latest `yt-dlp.exe` from the official releases page and place it in the project root:
+
+https://github.com/yt-dlp/yt-dlp/releases/latest
+
+### 6. First run model download
+
+Whisper downloads the selected model on first use and stores it in the local cache.
 
 ## Run the web app
 
@@ -81,6 +109,16 @@ http://127.0.0.1:5000
 
 You can also use `whisper_transcribe.py` or `download_and_transcribe.bat` for a direct command-line workflow.
 
+### CLI example
+
+```bash
+python whisper_transcribe.py "C:\path\to\audio.wav" --model medium --lang zh
+```
+
+### Batch example
+
+Double-click `download_and_transcribe.bat`, paste a YouTube URL, and follow the prompts.
+
 ## Output
 
 Transcripts are saved under `webapp/results/` as:
@@ -92,6 +130,7 @@ Transcripts are saved under `webapp/results/` as:
 
 - For Chinese audio, `medium` or `large-v3` usually gives better accuracy.
 - The first run may take a while because Whisper downloads the model to the local cache.
+- If you have an NVIDIA GPU, you can swap the CPU-only PyTorch install for a CUDA build.
 
 ## License
 
