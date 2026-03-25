@@ -1,49 +1,54 @@
 @echo off
 chcp 65001 >nul
-cd /d "C:\Users\james\OneDrive\桌面\油管视频处理"
+cd /d "%~dp0"
 
 echo ========================================
-echo  步骤 1: 下载音频（最佳音质）
+echo  YouTube Speech-to-Text Transcriber
 echo ========================================
-.\yt-dlp.exe -x --audio-format wav --audio-quality 0 ^
-  -o "视频\%(title)s.%%(ext)s" ^
-  "https://www.youtube.com/watch?v=7BtVrfUe0QY"
+echo.
+echo This script assumes yt-dlp.exe is in the project root.
+echo
+
+set /p VIDEO_URL=Paste YouTube URL: 
+if "%VIDEO_URL%"=="" (
+    echo No URL provided.
+    pause
+    exit /b 1
+)
+
+if not exist "视频" mkdir "视频"
 
 echo.
 echo ========================================
-echo  步骤 2: 查找刚下载的 wav 文件
+echo  Step 1: Download audio
+echo ========================================
+.\yt-dlp.exe -x --audio-format wav --audio-quality 0 ^
+  -o "视频\%%(title)s.%%(ext)s" ^
+  "%VIDEO_URL%"
+
+echo.
+echo ========================================
+echo  Step 2: Find the latest WAV file
 echo ========================================
 for /f "delims=" %%F in ('dir /b /o-d "视频\*.wav" 2^>nul') do (
-    set WAVFILE=视频\%%F
+    set "WAVFILE=视频\%%F"
     goto :found
 )
-echo 未找到 wav 文件，退出。
+echo No WAV file found.
 pause
 exit /b 1
 
 :found
-echo 找到音频文件: %WAVFILE%
+echo Found audio file: %WAVFILE%
 
 echo.
 echo ========================================
-echo  步骤 3: Whisper 转文字（medium 中文模型）
+echo  Step 3: Whisper transcription
 echo ========================================
-python -c "
-import whisper, os, sys
-wav = r'%WAVFILE%'
-print('加载 Whisper medium 模型（首次运行会下载约1.4GB）...')
-model = whisper.load_model('medium')
-print('开始转录...')
-result = model.transcribe(wav, language='zh', verbose=True)
-out = wav.replace('.wav', '_transcript.txt')
-with open(out, 'w', encoding='utf-8') as f:
-    f.write(result['text'])
-print()
-print('转录完成！输出文件:', out)
-"
+python whisper_transcribe.py "%WAVFILE%" --model medium --lang zh
 
 echo.
 echo ========================================
-echo  全部完成！
+echo  Done
 echo ========================================
 pause

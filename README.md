@@ -17,15 +17,15 @@ This project runs offline after the dependencies and model are installed. No API
 
 ```text
 youtube-transcriber/
-├── webapp/
-│   ├── app.py
-│   ├── templates/
-│   │   └── index.html
-│   └── results/
-├── whisper_transcribe.py
-├── download_and_transcribe.bat
-├── webapp/启动服务.bat
-└── .gitignore
+|-- webapp/
+|   |-- app.py
+|   |-- templates/
+|   |   `-- index.html
+|   `-- results/
+|-- whisper_transcribe.py
+|-- download_and_transcribe.bat
+|-- webapp/启动服务.bat
+`-- .gitignore
 ```
 
 ## Requirements
@@ -96,4 +96,3 @@ Transcripts are saved under `webapp/results/` as:
 ## License
 
 MIT
-
